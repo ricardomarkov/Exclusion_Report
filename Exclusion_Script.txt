@@ -1,0 +1,60 @@
+function main() {
+  // List of recipients for the report
+  var EMAILS = ["rbu@whitesharkmedia.com", "mau@whitesharkmedia.com"];
+  
+  // Query Google Ads for campaigns that received clicks from the U.S. in the last 90 days
+  var reportQuery = "" +
+    "SELECT CampaignName, Clicks, Impressions " +
+    "FROM GEO_PERFORMANCE_REPORT " +
+    "WHERE CountryCriteriaId = 2840 " + // 2840 is the country ID for the U.S.
+    "DURING LAST_90_DAYS";
+  
+  // Fetch the report data
+  var report = AdsApp.report(reportQuery);
+  var rows = report.rows();
+  var reportData = [];
+  
+  // Loop through the report data and collect campaigns with U.S. clicks
+  while (rows.hasNext()) {
+    var row = rows.next();
+    var campaignName = row["CampaignName"];
+    var clicks = parseInt(row["Clicks"]);
+    var impressions = parseInt(row["Impressions"]);
+    
+    // Only include campaigns that received clicks from the U.S.
+    if (clicks > 0) {
+      reportData.push(campaignName + " - Clicks: " + clicks + ", Impressions: " + impressions);
+    }
+  }
+  
+  // If any campaigns have U.S. clicks, send an email report
+  if (reportData.length > 0) {
+    var emailSubject = "Google Ads Report: U.S. Clicks Detected";
+    var emailBody = "The following campaigns received clicks from the U.S. in the last 90 days:\n\n" +
+                    reportData.join("\n");
+    
+    // Send an email to each recipient in the EMAILS list
+    for (var i = 0; i < EMAILS.length; i++) {
+      MailApp.sendEmail(EMAILS[i], emailSubject, emailBody);
+    }
+    Logger.log("Email sent with U.S. click data.");
+  } else {
+    Logger.log("No U.S. clicks detected in the last 90 days.");
+  }
+}
+
+/**
+ * HOW THIS SCRIPT WORKS:
+ * 1. The script queries the Google Ads GEO_PERFORMANCE_REPORT for data from the last 90 days.
+ * 2. It checks if any campaigns received clicks from the U.S. (Country ID: 2840).
+ * 3. If there are U.S. clicks, it collects the campaign name, clicks, and impressions.
+ * 4. The script then emails a report to the specified recipients.
+ * 5. If no U.S. clicks are found, it logs a message and exits.
+ *
+ * SETUP INSTRUCTIONS:
+ * - Go to Google Ads > Tools & Settings > Scripts.
+ * - Create a new script and paste this code.
+ * - Authorize the script when prompted.
+ * - Schedule the script to run weekly or monthly.
+ * - Monitor the email reports for U.S. traffic.
+ */
