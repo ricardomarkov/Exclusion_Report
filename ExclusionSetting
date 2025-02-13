@@ -1,6 +1,7 @@
 function main() {
   // Get an iterator for all accounts with clicks this month
   var accountIterator = MccApp.accounts()
+    .withIds(['598-631-6486'])
     .withCondition("Clicks > 0")
     .forDateRange("THIS_MONTH")
     .orderBy("Clicks DESC")
