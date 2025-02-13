@@ -9,37 +9,41 @@ function main() {
     "WHERE CountryCriteriaId = 2840 " + // 2840 is the country ID for the U.S.
     "DURING LAST_90_DAYS";
   
-  // Fetch the report data
-  var report = AdsApp.report(reportQuery);
-  var rows = report.rows();
-  var reportData = [];
-  
-  // Loop through the report data and collect campaigns with U.S. clicks
-  while (rows.hasNext()) {
-    var row = rows.next();
-    var campaignName = row["CampaignName"];
-    var clicks = parseInt(row["Clicks"]);
-    var impressions = parseInt(row["Impressions"]);
+  try {
+    // Fetch the report data
+    var report = AdsApp.report(reportQuery);
+    var rows = report.rows();
+    var reportData = [];
     
-    // Only include campaigns that received clicks from the U.S.
-    if (clicks > 0) {
-      reportData.push(campaignName + " - Clicks: " + clicks + ", Impressions: " + impressions);
+    // Loop through the report data and collect campaigns with U.S. clicks
+    while (rows.hasNext()) {
+      var row = rows.next();
+      var campaignName = row["CampaignName"];
+      var clicks = parseInt(row["Clicks"]);
+      var impressions = parseInt(row["Impressions"]);
+      
+      // Only include campaigns that received clicks from the U.S.
+      if (clicks > 0) {
+        reportData.push(campaignName + " - Clicks: " + clicks + ", Impressions: " + impressions);
+      }
     }
-  }
-  
-  // If any campaigns have U.S. clicks, send an email report
-  if (reportData.length > 0) {
-    var emailSubject = "Google Ads Report: U.S. Clicks Detected";
-    var emailBody = "The following campaigns received clicks from the U.S. in the last 90 days:\n\n" +
-                    reportData.join("\n");
     
-    // Send an email to each recipient in the EMAILS list
-    for (var i = 0; i < EMAILS.length; i++) {
-      MailApp.sendEmail(EMAILS[i], emailSubject, emailBody);
+    // If any campaigns have U.S. clicks, send an email report
+    if (reportData.length > 0) {
+      var emailSubject = "Google Ads Report: U.S. Clicks Detected";
+      var emailBody = "The following campaigns received clicks from the U.S. in the last 90 days:\n\n" +
+                      reportData.join("\n");
+      
+      // Send an email to each recipient in the EMAILS list
+      for (var i = 0; i < EMAILS.length; i++) {
+        MailApp.sendEmail(EMAILS[i], emailSubject, emailBody);
+      }
+      Logger.log("Email sent with U.S. click data.");
+    } else {
+      Logger.log("No U.S. clicks detected in the last 90 days.");
     }
-    Logger.log("Email sent with U.S. click data.");
-  } else {
-    Logger.log("No U.S. clicks detected in the last 90 days.");
+  } catch (e) {
+    Logger.log("An error occurred: " + e.message);
   }
 }
 
