@@ -1,0 +1,60 @@
+function main() {
+  // Get an iterator for all accounts with clicks this month
+  var accountIterator = MccApp.accounts()
+    .withCondition("Clicks > 0")
+    .forDateRange("THIS_MONTH")
+    .orderBy("Clicks DESC")
+    .get();
+  
+  // Open the Google Sheet by its ID
+  var spreadsheet = SpreadsheetApp.openById("1dUbvw4ShqB4o-5y8fe3-Wb2i1jnc6qDayu_pI33c9fQ");
+  
+  // Get the current MCC account
+  var mccAccount = AdWordsApp.currentAccount();
+  
+  // Get the specific sheet named 'ExclusionSetting'
+  var sheet = spreadsheet.getSheetByName('ExclusionSetting');
+  
+  // Append header row to the sheet (optional, you may want to check if it already exists)
+  sheet.appendRow(['CampaignID']);
+  
+  // Loop through each account in the iterator
+  while (accountIterator.hasNext()) {
+    var account = accountIterator.next();
+    
+    // Get the account name (default to '--' if not available)
+    var account_name = account.getName() ? account.getName() : '--';
+    
+    // Switch to the current account
+    MccApp.select(account);
+    
+    // Get an iterator for enabled campaigns in the current account
+    var campaignIterator = AdsApp.campaigns()
+      .withCondition("Status = ENABLED")
+      .get();
+    
+    // Loop through each campaign in the iterator
+    while (campaignIterator.hasNext()) {
+      var campaign = campaignIterator.next();
+      
+      // Query to select campaign IDs with specific geo-targeting settings
+      var query = 'SELECT campaign.id FROM campaign ' +
+                  'WHERE segments.date DURING THIS_MONTH AND campaign.geo_target_type_setting.negative_geo_target_type = "PRESENCE_OR_INTEREST"';
+      
+      // Execute the query
+      var result = AdsApp.search(query);
+      
+      // Loop through the results of the query
+      while (result.hasNext()) {
+        var row = result.next();
+        
+        // Log the row (this will log the entire row object, which may not be useful)
+        Logger.log(row);
+        
+        // Append the campaign ID to the sheet
+        // Correctly access the campaign ID
+        sheet.appendRow([row['campaign.id']]); // Ensure you are accessing the campaign ID correctly
+      }
+    }
+  }
+}
